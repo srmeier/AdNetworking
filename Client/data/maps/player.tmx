@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="2" height="2" tilewidth="8" tileheight="8">
+ <tileset firstgid="1" name="spritesheet" tilewidth="8" tileheight="8">
+  <image source="../spritesheet.bmp" trans="ff00ff" width="512" height="1024"/>
+ </tileset>
+ <layer name="frame_0" width="2" height="2" visible="0">
+  <data encoding="csv">
+68,69,
+66,66
+</data>
+ </layer>
+ <layer name="frame_1" width="2" height="2" visible="0">
+  <data encoding="csv">
+66,66,
+68,69
+</data>
+ </layer>
+ <layer name="frame_2" width="2" height="2" visible="0">
+  <data encoding="csv">
+70,66,
+71,66
+</data>
+ </layer>
+ <layer name="frame_3" width="2" height="2">
+  <data encoding="csv">
+66,70,
+66,71
+</data>
+ </layer>
+</map>
