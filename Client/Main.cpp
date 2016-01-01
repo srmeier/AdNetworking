@@ -20,6 +20,8 @@ AdLevel testLvl;
 
 //-----------------------------------------------------------------------------
 void CloseSocket(void) {
+	if(socket == NULL) return;
+
 	if(SDLNet_TCP_DelSocket(socket_set, socket) == -1) {
 		fprintf(stderr, "%s\n", SDLNet_GetError());
 		system("pause");
@@ -33,9 +35,11 @@ void CloseSocket(void) {
 
 //-----------------------------------------------------------------------------
 void SendData(uint8_t* data, uint16_t length, uint16_t flag) {
-	uint8_t temp_data[MAX_PACKET];
+	if(socket == NULL) return;
 
 	int offset = 0;
+	uint8_t temp_data[MAX_PACKET];
+
 	memcpy(temp_data+offset, &flag, sizeof(uint16_t));
 	offset += sizeof(uint16_t);
 	memcpy(temp_data+offset, data, length);
@@ -50,6 +54,8 @@ void SendData(uint8_t* data, uint16_t length, uint16_t flag) {
 
 //-----------------------------------------------------------------------------
 uint8_t* RecvData(uint16_t* length) {
+	if(socket == NULL) return NULL;
+
 	uint8_t temp_data[MAX_PACKET];
 	int num_recv = SDLNet_TCP_Recv(socket, temp_data, MAX_PACKET);
 
@@ -59,13 +65,14 @@ uint8_t* RecvData(uint16_t* length) {
 		const char* err = SDLNet_GetError();
 		if(strlen(err) == 0) {
 			printf("DB: server shutdown\n");
-			CloseSocket();
+
 			for(int ind=0; ind<MAX_SOCKETS; ++ind) {
 				if(testLvl.m_pClients[ind] == NULL) continue;
 				
 				delete testLvl.m_pClients[ind];
 				testLvl.m_pClients[ind] = NULL;
 			}
+
 		} else {
 			fprintf(stderr, "ER: SDLNet_TCP_Recv: %s\n", err);
 		}
@@ -84,6 +91,7 @@ uint8_t* RecvData(uint16_t* length) {
 //-----------------------------------------------------------------------------
 void ProcessData(uint8_t* data, uint16_t* offset) {
 	if(data == NULL) return;
+	if(socket == NULL) return;
 
 	uint16_t flag = *(uint16_t*) &data[*offset];
 	*offset += sizeof(uint16_t);
@@ -175,6 +183,8 @@ void InitNetwork(const char* pIP, int iPort) {
 
 //-----------------------------------------------------------------------------
 bool CheckSocket(void) {
+	if(socket == NULL) return false;
+
 	if(SDLNet_CheckSockets(socket_set, 0) == -1) {
 		fprintf(stderr, "%s\n", SDLNet_GetError());
 		system("pause");
@@ -230,8 +240,8 @@ int SDL_main(int argc, char* argv[]) {
 		return -1;
 	}
 
-	Mix_VolumeMusic(MIX_MAX_VOLUME/4);
-	Mix_VolumeChunk(sample, MIX_MAX_VOLUME/4);
+	Mix_VolumeMusic(0);//MIX_MAX_VOLUME/4);
+	Mix_VolumeChunk(sample, 0);//MIX_MAX_VOLUME/4);
 	//
 
 	// TESTING
@@ -254,8 +264,8 @@ int SDL_main(int argc, char* argv[]) {
 		uint16_t send_offset = 0;
 		uint8_t send_data[MAX_PACKET];
 
-		if(CheckSocket() && (socket!=NULL)) {
-			uint16_t length;
+		if(CheckSocket()) {
+			uint16_t length = 0;
 			uint8_t* data = RecvData(&length);
 
 			int num_processed = 0;

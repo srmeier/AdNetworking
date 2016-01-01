@@ -1,31 +1,9 @@
 /*
 */
 
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_net.h>
-
 //-----------------------------------------------------------------------------
-#define MAX_PACKET 0xFF
-#define MAX_SOCKETS 0x10
-
-//-----------------------------------------------------------------------------
-#define WOOD_WAIT_TIME 3000
-
-//-----------------------------------------------------------------------------
-#define FLAG_QUIT 0x0000
-#define FLAG_WOOD_QUEST 0x0011
-#define FLAG_WOOD_UPDATE 0x0010
-#define FLAG_WOOD_GETTIME 0x0012
-
-#define FLAG_PLAYER_POS 0x0020
-#define FLAG_PLAYER_CONNECT 0x0021
-#define FLAG_PLAYER_DISCONNECT 0x0022
+#include "AdDefine.h"
+#include "AdSocket.h"
 
 //-----------------------------------------------------------------------------
 typedef struct {
@@ -101,9 +79,11 @@ int AcceptSocket(int index) {
 
 //-----------------------------------------------------------------------------
 void SendData(int index, uint8_t* data, uint16_t length, uint16_t flag) {
-	uint8_t temp_data[MAX_PACKET];
+	if(sockets[index] == NULL) return;
 
 	int offset = 0;
+	uint8_t temp_data[MAX_PACKET];
+
 	memcpy(temp_data+offset, &flag, sizeof(uint16_t));
 	offset += sizeof(uint16_t);
 	memcpy(temp_data+offset, data, length);
@@ -118,6 +98,8 @@ void SendData(int index, uint8_t* data, uint16_t length, uint16_t flag) {
 
 //-----------------------------------------------------------------------------
 uint8_t* RecvData(int index, uint16_t* length) {
+	if(sockets[index] == NULL) return NULL;
+
 	uint8_t temp_data[MAX_PACKET];
 	int num_recv = SDLNet_TCP_Recv(sockets[index], temp_data, MAX_PACKET);
 
@@ -160,6 +142,7 @@ uint8_t* RecvData(int index, uint16_t* length) {
 //-----------------------------------------------------------------------------
 void ProcessData(int index, uint8_t* data, uint16_t* offset) {
 	if(data == NULL) return;
+	if(sockets[index] == NULL) return;
 
 	uint16_t flag = *(uint16_t*) &data[*offset];
 	*offset += sizeof(uint16_t);
@@ -207,8 +190,8 @@ void ProcessData(int index, uint8_t* data, uint16_t* offset) {
 		} break;
 
 		case FLAG_QUIT: {
-			running = 0;
-			printf("DB: shutdown by client id: %d\n", index);
+			//running = 0;
+			//printf("DB: shutdown by client id: %d\n", index);
 		} break;
 	}
 }
