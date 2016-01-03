@@ -240,7 +240,7 @@ int main(int argc, char** argv) {
 			// NOTE: none of the sockets are ready
 			int ind;
 			for(ind=0; ind<MAX_SOCKETS; ++ind) {
-				if(!clients[ind].in_use) continue;
+				if(!clients[ind].in_use || sockets[ind]==NULL) continue;
 
 				//
 				uint16_t send_offset = 0;
@@ -302,8 +302,8 @@ int main(int argc, char** argv) {
 
 				//
 				uint16_t send_offset = 0;
-				uint8_t send_data[MAX_PACKET];
 				uint16_t send_offset2 = 0;
+				uint8_t send_data[MAX_PACKET];
 				uint8_t send_data2[MAX_PACKET];
 
 				memcpy(send_data+send_offset, &next_ind, sizeof(uint32_t));
@@ -344,7 +344,7 @@ int main(int argc, char** argv) {
 
 			int ind;
 			for(ind=0; (ind<MAX_SOCKETS) && num_rdy; ++ind) {
-				if(sockets[ind] == NULL) continue;
+				if(!clients[ind].in_use || sockets[ind]==NULL) continue;
 				if(!SDLNet_SocketReady(sockets[ind])) continue;
 
 				uint8_t* data;

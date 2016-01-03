@@ -8,6 +8,9 @@
 class AdEntity {
 friend class AdTiledManager;
 
+protected:
+	bool m_bUseFileXY;
+
 public:
 	int            m_iFrame;
 	SDL_Surface**  m_pFrames;

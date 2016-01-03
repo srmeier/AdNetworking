@@ -1,6 +1,8 @@
 #ifndef __ADDEFINE_H_
 #define __ADDEFINE_H_
 
+#include <list>
+#include <queue>
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +15,8 @@
 //-----------------------------------------------------------------------------
 #define MAX_PACKET 0xFF
 #define MAX_SOCKETS 0x10
+
+#define MAX_USERS 0xFF
 
 //-----------------------------------------------------------------------------
 #define WOOD_WAIT_TIME 3000

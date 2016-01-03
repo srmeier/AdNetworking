@@ -114,17 +114,21 @@ void ProcessData(uint8_t* data, uint16_t* offset) {
 		case FLAG_PLAYER_CONNECT: {
 			int ind = *(uint32_t*) &data[*offset];
 			*offset += sizeof(uint32_t);
-			int m_iGI = *(uint8_t*) &data[*offset];
+			int iGI = *(uint8_t*) &data[*offset];
 			*offset += sizeof(uint8_t);
-			int m_iGJ = *(uint8_t*) &data[*offset];
+			int iGJ = *(uint8_t*) &data[*offset];
 			*offset += sizeof(uint8_t);
 
-			testLvl.m_pClients[ind] = new AdEntity(8*m_iGI, 8*m_iGJ, "player");
+			if(ind<0 || ind>MAX_SOCKETS) break;
+
+			testLvl.m_pClients[ind] = new AdEntity(8*iGI, 8*iGJ, "player");
 		} break;
 
 		case FLAG_PLAYER_DISCONNECT: {
 			int ind = *(uint32_t*) &data[*offset];
 			*offset += sizeof(uint32_t);
+
+			if(ind<0 || ind>MAX_SOCKETS) break;
 
 			delete testLvl.m_pClients[ind];
 			testLvl.m_pClients[ind] = NULL;
@@ -133,19 +137,19 @@ void ProcessData(uint8_t* data, uint16_t* offset) {
 		case FLAG_PLAYER_POS: {
 			int ind = *(uint32_t*) &data[*offset];
 			*offset += sizeof(uint32_t);
+			int iGI = *(uint8_t*) &data[*offset];
+			*offset += sizeof(uint8_t);
+			int iGJ = *(uint8_t*) &data[*offset];
+			*offset += sizeof(uint8_t);
+
+			if(ind<0 || ind>MAX_SOCKETS) break;
 
 			AdEntity* client = testLvl.m_pClients[ind];
 			if(client == NULL) {
 				printf("ER: missing client! (%d)\n", ind);
-				int m_iGI = *(uint8_t*) &data[*offset];
-				*offset += sizeof(uint8_t);
-				int m_iGJ = *(uint8_t*) &data[*offset];
-				*offset += sizeof(uint8_t);
 			} else {
-				client->m_iGI = *(uint8_t*) &data[*offset];
-				*offset += sizeof(uint8_t);
-				client->m_iGJ = *(uint8_t*) &data[*offset];
-				*offset += sizeof(uint8_t);
+				client->m_iGI = iGI;
+				client->m_iGJ = iGJ;
 			}
 		} break;
 	}

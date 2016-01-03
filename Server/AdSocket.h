@@ -5,9 +5,16 @@
 
 //-----------------------------------------------------------------------------
 class AdSocket {
+protected:
+	int m_iSid;
+
 public:
 	SDL_mutex* m_pMutex;
 	TCPsocket  m_tcpSocket;
+
+public:
+	int  GetSocketID(void)     {return m_iSid;}
+	void SetSocketID(int iSid) {m_iSid = iSid;}
 
 public:
 	void         Init(TCPsocket pSocket);

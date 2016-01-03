@@ -16,6 +16,8 @@ AdEntity::AdEntity(
 
 	m_iSendToOffset = 0;
 
+	m_bUseFileXY = (pFileName==NULL);
+
 	m_recTrigger.x  = iX;
 	m_recTrigger.y  = iY;
 	m_recTrigger.w  = 0;
@@ -83,13 +85,15 @@ void AdEntity::Load(duk_context* pCtx) {
 	strcpy(m_pType, duk_get_string(pCtx, -1));
 	duk_pop(pCtx);
 
-	duk_get_prop_string(pCtx, -1, "x");
-	m_recTrigger.x = duk_to_int(pCtx, -1);
-	duk_pop(pCtx);
+	if(m_bUseFileXY) {
+		duk_get_prop_string(pCtx, -1, "x");
+		m_recTrigger.x = duk_to_int(pCtx, -1);
+		duk_pop(pCtx);
 
-	duk_get_prop_string(pCtx, -1, "y");
-	m_recTrigger.y = duk_to_int(pCtx, -1);
-	duk_pop(pCtx);
+		duk_get_prop_string(pCtx, -1, "y");
+		m_recTrigger.y = duk_to_int(pCtx, -1);
+		duk_pop(pCtx);
+	}
 
 	duk_get_prop_string(pCtx, -1, "width");
 	m_recTrigger.w = duk_to_int(pCtx, -1);
@@ -258,13 +262,12 @@ void AdEntity::HandleMovement(class AdTiledManager* pMap) {
 	}
 
 	// NOTE: if there is a goal for this entity force them to move there
-	if(m_iGI!=-1 && m_iGJ!=-1 && !m_bMoving) {
+	if(m_iGI!=-1 && m_iGJ!=-1) { //&& !m_bForceMove) {//!m_bMoving) {
 		if(m_iGI!=m_iI) {
 			if(m_iGI<m_iI) {
 				m_bForceMove = true;
 				m_iForcedirec = LEFT_DIREC;
-			}
-			if(m_iGI>m_iI) {
+			} else if(m_iGI>m_iI) {
 				m_bForceMove = true;
 				m_iForcedirec = RIGHT_DIREC;
 			}
@@ -272,8 +275,7 @@ void AdEntity::HandleMovement(class AdTiledManager* pMap) {
 			if(m_iGJ<m_iJ) {
 				m_bForceMove = true;
 				m_iForcedirec = UP_DIREC;
-			}
-			if(m_iGJ>m_iJ) {
+			} else if(m_iGJ>m_iJ) {
 				m_bForceMove = true;
 				m_iForcedirec = DOWN_DIREC;
 			}
