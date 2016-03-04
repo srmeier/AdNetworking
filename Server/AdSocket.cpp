@@ -5,69 +5,47 @@
 
 //-----------------------------------------------------------------------------
 AdSocket::AdSocket(void) {
-	m_tcpSocket = NULL;
-	m_pMutex = SDL_CreateMutex();
+	m_pSocket = NULL;
 }
 
 //-----------------------------------------------------------------------------
 AdSocket::~AdSocket(void) {
-	m_tcpSocket = NULL;
-	SDL_DestroyMutex(m_pMutex);
+	Close();
 }
 
 //-----------------------------------------------------------------------------
-void AdSocket::Init(TCPsocket pSocket) {
-	m_tcpSocket = pSocket;
+int AdSocket::RemoveFromSocketSet(SDLNet_SocketSet pSocketSet) {
+	return SDLNet_TCP_DelSocket(pSocketSet, m_pSocket);
 }
 
 //-----------------------------------------------------------------------------
-void AdSocket::ProcData(uint8_t* pData, uint16_t* sOffset) {
-	/*
-	if(m_tcpSocket==NULL || pData==NULL) return;
-
-	uint16_t flag = *(uint16_t*) &pData[*sOffset];
-	*sOffset += sizeof(uint16_t);
-
-	switch(flag) {
-
-	}
-	*/
+void AdSocket::Close(void) {
+	if (m_pSocket) SDLNet_TCP_Close(m_pSocket);
+	m_pSocket = NULL;
 }
 
 //-----------------------------------------------------------------------------
-int AdSocket::SendData(uint8_t* pData, int iLen, uint16_t sFlag) {
-	if(m_tcpSocket == NULL) return -1;
-
-	int offset = 0;
-	uint8_t data[MAX_PACKET];
-
-	memcpy(data+offset, &sFlag, sizeof(uint16_t));
-	offset += sizeof(uint16_t);
-	memcpy(data+offset, pData, iLen);
-
-	int num_sent;
-	SDL_LockMutex(m_pMutex);
-	num_sent = SDLNet_TCP_Send(m_tcpSocket, data, offset);	
-	SDL_UnlockMutex(m_pMutex);
-
-	return (num_sent-sizeof(uint16_t));
+bool AdSocket::Init(TCPsocket pSocket) {
+	m_pSocket = SDLNet_TCP_Accept(pSocket);
+	return IsActive();
 }
 
 //-----------------------------------------------------------------------------
-uint8_t* AdSocket::RecvData(int* iLen) {
-	if(m_tcpSocket == NULL) return NULL;
+int AdSocket::AddToSocketSet(SDLNet_SocketSet pSocketSet) {
+	return SDLNet_TCP_AddSocket(pSocketSet, m_pSocket);
+}
 
-	int offset = 0;
-	uint8_t data[MAX_PACKET];
+//-----------------------------------------------------------------------------
+int AdSocket::SendData(Uint8* pBuffer, int iOffset) {
+	return SDLNet_TCP_Send(m_pSocket, pBuffer, iOffset);
+}
 
-	SDL_LockMutex(m_pMutex);
-	*iLen = SDLNet_TCP_Recv(m_tcpSocket, data, MAX_PACKET);
-	SDL_UnlockMutex(m_pMutex);
+//-----------------------------------------------------------------------------
+int AdSocket::RecvData(Uint8* pBuffer, int iSize) {
+	return SDLNet_TCP_Recv(m_pSocket, pBuffer, iSize);
+}
 
-	if(*iLen <= 0) return NULL;
-
-	uint8_t* pData = (uint8_t*) malloc(*iLen*sizeof(uint8_t));
-	memcpy(pData, data, *iLen);
-
-	return pData;
+//-----------------------------------------------------------------------------
+bool AdSocket::IsSocketReady(void) {
+	return (SDLNet_SocketReady(m_pSocket) & 0x01);
 }

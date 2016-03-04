@@ -6,25 +6,21 @@
 //-----------------------------------------------------------------------------
 class AdSocket {
 protected:
-	int m_iSid;
+	TCPsocket m_pSocket;
 
 public:
-	SDL_mutex* m_pMutex;
-	TCPsocket  m_tcpSocket;
-
-public:
-	int  GetSocketID(void)     {return m_iSid;}
-	void SetSocketID(int iSid) {m_iSid = iSid;}
-
-public:
-	void         Init(TCPsocket pSocket);
-	virtual void ProcData(uint8_t* pData, uint16_t* sOffset);
-	int          SendData(uint8_t* pData, int iLen, uint16_t sFlag);
-	uint8_t*     RecvData(int* iLen);
+	bool IsActive(void) { return (m_pSocket != NULL); }
+	int RemoveFromSocketSet(SDLNet_SocketSet pSocketSet);
+	virtual void Close(void);
+	virtual bool Init(TCPsocket pSocket);
+	int AddToSocketSet(SDLNet_SocketSet pSocketSet);
+	int SendData(Uint8* pBuffer, int iOffset);
+	int RecvData(Uint8* pBuffer, int iSize);
+	bool IsSocketReady(void);
 
 public:
 	AdSocket(void);
-	~AdSocket(void);
+	virtual ~AdSocket(void);
 };
 
 #endif

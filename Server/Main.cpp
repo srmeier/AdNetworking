@@ -4,43 +4,31 @@
 //-----------------------------------------------------------------------------
 #include "AdDefine.h"
 #include "AdSocket.h"
-
-//-----------------------------------------------------------------------------
-typedef struct {
-	int in_use;
-	int questing;
-	uint8_t i, j;
-	uint8_t direc;
-	uint8_t amt_wood;
-	uint32_t timer_wood;
-} Client;
+#include "AdClient.h"
 
 //-----------------------------------------------------------------------------
 int running = 1;
 int next_ind = 0;
 TCPsocket server_socket;
-Client clients[MAX_SOCKETS];
+AdClient clients[MAX_SOCKETS];
 SDLNet_SocketSet socket_set;
-TCPsocket sockets[MAX_SOCKETS];
 
 //-----------------------------------------------------------------------------
 void SendData(int index, uint8_t* data, uint16_t length, uint16_t flag);
 
 //-----------------------------------------------------------------------------
 void CloseSocket(int index) {
-	if(sockets[index] == NULL) {
+	if(!clients[index].IsActive()) {
 		fprintf(stderr, "ER: Attempted to delete a NULL socket.\n");
 		return;
 	}
 
-	if(SDLNet_TCP_DelSocket(socket_set, sockets[index]) == -1) {
+	if(clients[index].RemoveFromSocketSet(socket_set) == -1) {
 		fprintf(stderr, "ER: SDLNet_TCP_DelSocket: %s\n", SDLNet_GetError());
 		exit(-1);
 	}
 
-	memset(&clients[index], 0x00, sizeof(Client));
-	SDLNet_TCP_Close(sockets[index]);
-	sockets[index] = NULL;
+	clients[index].Close();
 
 	//
 	uint16_t send_offset = 0;
@@ -52,7 +40,7 @@ void CloseSocket(int index) {
 	int ind2;
 	for(ind2=0; ind2<MAX_SOCKETS; ++ind2) {
 		if(ind2 == index) continue;
-		if(!clients[ind2].in_use) continue;
+		if(!clients[ind2].IsActive()) continue;
 		SendData(ind2, send_data, send_offset, FLAG_PLAYER_DISCONNECT);
 	}
 	//
@@ -60,16 +48,14 @@ void CloseSocket(int index) {
 
 //-----------------------------------------------------------------------------
 int AcceptSocket(int index) {
-	if(sockets[index]) {
+	if(clients[index].IsActive()) {
 		fprintf(stderr, "ER: Overriding socket at index %d.\n", index);
 		CloseSocket(index);
 	}
 
-	sockets[index] = SDLNet_TCP_Accept(server_socket);
-	if(sockets[index] == NULL) return 0;
+	if(clients[index].Init(server_socket) == false) return 0;
 
-	clients[index].in_use = 1;
-	if(SDLNet_TCP_AddSocket(socket_set, sockets[index]) == -1) {
+	if(clients[index].AddToSocketSet(socket_set) == -1) {
 		fprintf(stderr, "ER: SDLNet_TCP_AddSocket: %s\n", SDLNet_GetError());
 		exit(-1);
 	}
@@ -79,7 +65,7 @@ int AcceptSocket(int index) {
 
 //-----------------------------------------------------------------------------
 void SendData(int index, uint8_t* data, uint16_t length, uint16_t flag) {
-	if(sockets[index] == NULL) return;
+	if(!clients[index].IsActive()) return;
 
 	int offset = 0;
 	uint8_t temp_data[MAX_PACKET];
@@ -89,7 +75,7 @@ void SendData(int index, uint8_t* data, uint16_t length, uint16_t flag) {
 	memcpy(temp_data+offset, data, length);
 	offset += length;
 
-	int num_sent = SDLNet_TCP_Send(sockets[index], temp_data, offset);
+	int num_sent = clients[index].SendData(temp_data, offset);
 	if(num_sent < offset) {
 		fprintf(stderr, "ER: SDLNet_TCP_Send: %s\n", SDLNet_GetError());
 		CloseSocket(index);
@@ -98,10 +84,10 @@ void SendData(int index, uint8_t* data, uint16_t length, uint16_t flag) {
 
 //-----------------------------------------------------------------------------
 uint8_t* RecvData(int index, uint16_t* length) {
-	if(sockets[index] == NULL) return NULL;
+	if(!clients[index].IsActive()) return NULL;
 
 	uint8_t temp_data[MAX_PACKET];
-	int num_recv = SDLNet_TCP_Recv(sockets[index], temp_data, MAX_PACKET);
+	int num_recv = clients[index].RecvData(temp_data, MAX_PACKET);
 
 	if(num_recv <= 0) {
 		CloseSocket(index);
@@ -118,7 +104,7 @@ uint8_t* RecvData(int index, uint16_t* length) {
 			int ind2;
 			for(ind2=0; ind2<MAX_SOCKETS; ++ind2) {
 				if(ind2 == index) continue;
-				if(!clients[ind2].in_use) continue;
+				if(!clients[ind2].IsActive()) continue;
 				SendData(ind2, send_data, send_offset, FLAG_PLAYER_DISCONNECT);
 			}
 			//
@@ -142,7 +128,7 @@ uint8_t* RecvData(int index, uint16_t* length) {
 //-----------------------------------------------------------------------------
 void ProcessData(int index, uint8_t* data, uint16_t* offset) {
 	if(data == NULL) return;
-	if(sockets[index] == NULL) return;
+	if(!clients[index].IsActive()) return;
 
 	uint16_t flag = *(uint16_t*) &data[*offset];
 	*offset += sizeof(uint16_t);
@@ -197,7 +183,7 @@ void ProcessData(int index, uint8_t* data, uint16_t* offset) {
 }
 
 //-----------------------------------------------------------------------------
-int main(int argc, char** argv) {
+int SDL_main(int argc, char** argv) {
 	srand((unsigned int) time(NULL));
 
 	if(SDL_Init(SDL_INIT_TIMER|SDL_INIT_EVENTS) != 0) {
@@ -240,7 +226,7 @@ int main(int argc, char** argv) {
 			// NOTE: none of the sockets are ready
 			int ind;
 			for(ind=0; ind<MAX_SOCKETS; ++ind) {
-				if(!clients[ind].in_use || sockets[ind]==NULL) continue;
+				if(!clients[ind].IsActive()) continue;
 
 				//
 				uint16_t send_offset = 0;
@@ -287,7 +273,7 @@ int main(int argc, char** argv) {
 				int ind2;
 				for(ind2=0; ind2<MAX_SOCKETS; ++ind2) {
 					if(ind2 == ind) continue;
-					if(!clients[ind2].in_use) continue;
+					if(!clients[ind2].IsActive()) continue;
 					SendData(ind2, send_data, send_offset, FLAG_PLAYER_POS);
 				}
 				//
@@ -316,7 +302,7 @@ int main(int argc, char** argv) {
 				int ind2;
 				for(ind2=0; ind2<MAX_SOCKETS; ++ind2) {
 					if(ind2 == next_ind) continue;
-					if(!clients[ind2].in_use) continue;
+					if(!clients[ind2].IsActive()) continue;
 					SendData(ind2, send_data, send_offset, FLAG_PLAYER_CONNECT);
 
 					send_offset2 = 0;
@@ -333,7 +319,7 @@ int main(int argc, char** argv) {
 				// NOTE: get a new index
 				int chk_count;
 				for(chk_count=0; chk_count<MAX_SOCKETS; ++chk_count) {
-					if(sockets[(next_ind+chk_count)%MAX_SOCKETS] == NULL) break;
+					if(!clients[(next_ind+chk_count)%MAX_SOCKETS].IsActive()) break;
 				}
 
 				next_ind = (next_ind+chk_count)%MAX_SOCKETS;
@@ -344,8 +330,8 @@ int main(int argc, char** argv) {
 
 			int ind;
 			for(ind=0; (ind<MAX_SOCKETS) && num_rdy; ++ind) {
-				if(!clients[ind].in_use || sockets[ind]==NULL) continue;
-				if(!SDLNet_SocketReady(sockets[ind])) continue;
+				if(!clients[ind].IsActive()) continue;
+				if(!clients[ind].IsSocketReady()) continue;
 
 				uint8_t* data;
 				uint16_t length;
@@ -380,7 +366,7 @@ int main(int argc, char** argv) {
 
 	int i;
 	for(i=0; i<MAX_SOCKETS; ++i) {
-		if(sockets[i] == NULL) continue;
+		if(!clients[i].IsActive()) continue;
 		CloseSocket(i);
 	}
 
