@@ -147,12 +147,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AdClient.cpp" />
+    <ClCompile Include="AdServer.cpp" />
     <ClCompile Include="AdSocket.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdClient.h" />
     <ClInclude Include="AdDefine.h" />
+    <ClInclude Include="AdServer.h" />
     <ClInclude Include="AdSocket.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

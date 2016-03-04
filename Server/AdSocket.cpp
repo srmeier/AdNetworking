@@ -37,11 +37,13 @@ int AdSocket::AddToSocketSet(SDLNet_SocketSet pSocketSet) {
 
 //-----------------------------------------------------------------------------
 int AdSocket::SendData(Uint8* pBuffer, int iOffset) {
+	if (!IsActive()) return 0;
 	return SDLNet_TCP_Send(m_pSocket, pBuffer, iOffset);
 }
 
 //-----------------------------------------------------------------------------
 int AdSocket::RecvData(Uint8* pBuffer, int iSize) {
+	if (!IsActive()) return 0;
 	return SDLNet_TCP_Recv(m_pSocket, pBuffer, iSize);
 }
 

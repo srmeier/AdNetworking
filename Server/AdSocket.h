@@ -17,10 +17,11 @@ public:
 	int SendData(Uint8* pBuffer, int iOffset);
 	int RecvData(Uint8* pBuffer, int iSize);
 	bool IsSocketReady(void);
+	virtual void ProcData(Uint8* pBuffer, Uint16& iOffset) = 0;
 
 public:
 	AdSocket(void);
-	virtual ~AdSocket(void);
+	~AdSocket(void);
 };
 
 #endif

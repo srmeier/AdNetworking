@@ -24,6 +24,9 @@
     <ClCompile Include="AdClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AdServer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdDefine.h">
@@ -33,6 +36,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AdClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AdServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

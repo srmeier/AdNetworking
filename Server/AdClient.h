@@ -17,10 +17,11 @@ public:
 	virtual void Close(void);
 	virtual bool Init(TCPsocket pSocket);
 	virtual void Reset(void);
+	virtual void ProcData(Uint8* pBuffer, Uint16& iOffset);
 
 public:
 	AdClient(void);
-	virtual ~AdClient(void);
+	~AdClient(void);
 };
 
 #endif
